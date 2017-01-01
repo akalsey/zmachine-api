@@ -215,11 +215,7 @@ app.post('/games/:pid/restore', function(req, res) {
 
     var getFromS3 = function() {
         if (s3 === undefined) {
-<<<<<<< HEAD
             restoreFromDisk(failure);
-=======
-            res.status(404).send('Failed to find game on Disk\nCannot get from S3: not configured');
->>>>>>> errorcodes
             return;
         }
         // Grab from S3
