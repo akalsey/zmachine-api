@@ -1,6 +1,5 @@
 var express = require('express');
 var bodyParser = require('body-parser');
-var AWS = require('aws-sdk');
 var env = require('node-env-file');
 var spawn = require('child_process').spawn;
 
@@ -15,6 +14,7 @@ var port = process.env.PORT;
 
 // Need to define AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET env variables
 if (process.env.AWS_REGION) {
+    var AWS = require('aws-sdk');
     AWS.config.region = process.env.AWS_REGION;
     s3 = new AWS.S3({params: {Bucket: process.env.AWS_S3_BUCKET}});
     console.log('Games will be saved to S3.');
@@ -144,7 +144,7 @@ app.post('/games/:pid/save', function(req, res) {
         });
     };
 
-    console.log('Saving game ' + pid);
+    console.log('Saving game ' + pid + ' to ' + path);
     writeToPid(pid, 'save');
     readFromPid(pid, function(data) {
         data = new String(data);
@@ -163,7 +163,9 @@ app.post('/games/:pid/save', function(req, res) {
                 readFromPid(pid, saveToS3)
             }
             else {
-                saveToS3(data);
+                if (s3 !== undefined) {
+                  saveToS3(data);
+                }
             }
         });
     });
@@ -238,7 +240,11 @@ app.post('/games/:pid/restore', function(req, res) {
         });
     };
 
-    restoreFromDisk(getFromS3);
+    if (s3 === undefined) {
+        restoreFromDisk(failure);
+    } else {
+        restoreFromDisk(getFromS3);
+    }
 });
 
 var server = app.listen(port, function() {
@@ -246,6 +252,14 @@ var server = app.listen(port, function() {
     var port = server.address().port;
 
     console.log('All listening on %s:%s', host, port);
+}).on('error', function(err){
+    console.log('on error handler');
+    console.log(err);
+});
+
+process.on('uncaughtException', function(err) {
+    console.log('process.on handler');
+    console.log(err);
 });
 
 var writeToPid = function(pid, data) {
