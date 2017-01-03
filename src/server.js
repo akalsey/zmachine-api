@@ -97,6 +97,10 @@ app.delete('/games/:pid', function(req, res) {
 
 app.post('/games/:pid/action', function(req, res) {
     var pid = req.params.pid;
+    if (undefined === games[pid]) {
+      res.status(404).send({error: 'Game ' + pid + ' not found.'});
+      return
+    }
     writeToPid(pid, req.body.action);
     readFromPid(pid, function(data) {
         data = new String(data);
@@ -113,6 +117,14 @@ app.post('/games/:pid/action', function(req, res) {
 
 app.post('/games/:pid/save', function(req, res) {
     var pid = req.params.pid;
+    if (undefined === games[pid]) {
+      res.status(404).send({error: 'Game ' + pid + ' not found.'});
+      return
+    }
+    if (undefined === req.body.file) {
+      res.status(400).send({error: 'File not specified.'});
+      return
+    }
     var file = req.body.file;
     var filePrefix = games[pid].label + '-' + games[pid].name + '-';
     var path = 'saves/' + filePrefix + file + '.sav';
@@ -178,6 +190,14 @@ app.post('/games/:pid/save', function(req, res) {
 
 app.post('/games/:pid/restore', function(req, res) {
     var pid = req.params.pid;
+    if (undefined === games[pid]) {
+      res.status(404).send({error: 'Game ' + pid + ' not found.'});
+      return
+    }
+    if (undefined === req.body.file) {
+      res.status(400).send({error: 'File not specified.'});
+      return
+    }
     var file = req.body.file;
     var filePrefix = games[pid].label + '-' + games[pid].name + '-';
     var path = 'saves/' + filePrefix + file + '.sav';
